@@ -19,28 +19,6 @@ on join:
     if {%player's uuid%::data::prestige} is not set:
         set {%player's uuid%::data::prestige} to 0
 
-command /cc [<text>]:
-    permission: hydra.cc, hydra.*
-    trigger:
-        if arg-1 is set:
-            if arg-1 is "red":
-                set {%player's uuid%::data::chatcolor} to "&c"
-                send "&7Set your chat color to: &cRed"
-            if arg-1 is "dark-red":
-                set {%player's uuid%::data::chatcolor} to "&4"
-                send "&7Set your chat color to: &4Dark Red"
-            if arg-1 is "aqua":
-                set {%player's uuid%::data::chatcolor} to "&b"
-                send "&7Set your chat color to: &bAqua"
-            if arg-1 is "light-purple":
-                set {%player's uuid%::data::chatcolor} to "&d"
-                send "&7Set your chat color to: &dLight Purple"
-            if arg-1 is "off":
-                clear {%player's uuid%::data::chatcolor}
-                send "&7Set your chat color to: &7Default"
-        else:
-            send "&f&lList of all available colors:%nl%&cRed%nl%&4Dark-Red%nl%&bAqua%nl%&dLight-Purple"
-
 #      ====== PRESTIGE SYSTEM ======
 
 command /prestige:
@@ -197,18 +175,26 @@ function toTimespan(t: text) :: timespan:
 	set {_t} to "%{_l::1}% %{_conversion::%{_l::2}%}%"
 	return ({_t} parsed as timespan)
 
+every second:
+	loop all players:
+		{mute::%loop-player's uuid%} is set
+		{mutet::%loop-player's uuid%} is set
+		if difference between {mutet::%loop-player's uuid%} and now is less than 1 second:
+			send "&6[Beans] &eYou have been unmuted!" to loop-player
+			delete {mute::%loop-player's uuid%}
+			delete {mutet::%loop-player's uuid%}
+			delete {mutet2::%loop-player's uuid%}
 
 on chat:
-    cancel event
     replace every ":heart:" with "❤" in the message
     replace every ":shrug:" with "¯\_(ツ)_/¯" in the message
     if {server::chat::muted} is true:
         if player has permission "hydra.chat.bypass":
-            send "&7[%{%player's uuid%::data::prestige}%✯&7] %player's display name% &a%message%" to all players
+            cancel event
+            send "%player's display name% &7%message%" to all players
         else:
             send "&7Chat is currently muted"
-    else:
-        if {%player's uuid%::data::chatcolor} is set:
-            send "&7[%{%player's uuid%::data::prestige}%✯&7] %player's display name% %{%player's uuid%::data::chatcolor}%%message%" to all players
-        else:
-            send "&7[%{%player's uuid%::data::prestige}%✯&7] %player's display name% &7%message%" to all players
+    if {mute::%player's uuid%} is set:
+        if {mutet::%player's uuid%} is not set:
+            send {mute::%player's uuid%}
+            cancel event
