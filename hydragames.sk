@@ -1,0 +1,214 @@
+# HYDRA GAMES SKRIPT
+# Author[s]: IdeoXI
+# Creation Date: 7/28/2019 4:00 PM EST
+# TOS:
+# You are not allowed to edit this skript.
+# You are not allowed to claim the code of the skript as your own.
+# You are not allowed to distribute/share this skript anywhere.
+# The authors of this skript hold the right to change this at anytime
+
+options:
+    ServerName: &c&lHGames
+    Prefix: &c&lHGames
+    Version: v0.0.1
+
+on first join:
+    set {%player's uuid%::data::prestige} to 0
+
+on join:
+    if {%player's uuid%::data::prestige} is not set:
+        set {%player's uuid%::data::prestige} to 0
+
+command /cc [<text>]:
+    permission: hydra.cc, hydra.*
+    trigger:
+        if arg-1 is set:
+            if arg-1 is "red":
+                set {%player's uuid%::data::chatcolor} to "&c"
+                send "&7Set your chat color to: &cRed"
+            if arg-1 is "dark-red":
+                set {%player's uuid%::data::chatcolor} to "&4"
+                send "&7Set your chat color to: &4Dark Red"
+            if arg-1 is "aqua":
+                set {%player's uuid%::data::chatcolor} to "&b"
+                send "&7Set your chat color to: &bAqua"
+            if arg-1 is "light-purple":
+                set {%player's uuid%::data::chatcolor} to "&d"
+                send "&7Set your chat color to: &dLight Purple"
+            if arg-1 is "off":
+                clear {%player's uuid%::data::chatcolor}
+                send "&7Set your chat color to: &7Default"
+        else:
+            send "&f&lList of all available colors:%nl%&cRed%nl%&4Dark-Red%nl%&bAqua%nl%&dLight-Purple"
+
+#      ====== PRESTIGE SYSTEM ======
+
+command /prestige:
+    trigger:
+        if {%player's uuid%::data::prestigeprice} is not set:
+            if {%player%.kills} >= {%player's uuid%::data::prestigeprice}:
+                remove {%player's uuid%::data::prestigeprice} from {%player%.kills}
+                add 1 to {%player's uuid%::data::prestige}
+                send "&7You just prestiged to %{%player's uuid%::data::prestige}% for %{%player's uuid%::data::prestigeprice}%"
+                wait 1 tick
+                add 100 to {%player's uuid%::data::prestigeprice}
+            else:
+                send "&7You do not have enough kills for this prestige. Required Kills: %{%player's uuid%::data::prestigeprice}%"
+        else:
+            if {%player%.kills} >= {%player's uuid%::data::prestigeprice}:
+                remove {%player's uuid%::data::prestigeprice} from {%player%.kills}
+                add 1 to {%player's uuid%::data::prestige}
+                send "&7You just prestiged to %{%player's uuid%::data::prestige}% for %{%player's uuid%::data::prestigeprice}%"
+                wait 1 tick
+                add 100 to {%player's uuid%::data::prestigeprice}
+            else:
+                send "&7You do not have enough kills for this prestige. Required Kills: %{%player's uuid%::data::prestigeprice}%"
+
+command /prestige-set [<offlineplayer>] [<integer>]:
+    permission: hydra.prestigeset, hydra.*
+    permission message: &cNo Permission!
+    trigger:
+        if arg-1 is set:
+            if arg-2 is set:
+                set {%arg-1's uuid%::data::prestige} to arg-2
+                send "&7Set %arg-1%'s prestige to %arg-2%!"
+                send "&7Your prestige was set to %arg-2% by %player%!" to arg-1
+            else:
+                send "&7Usage: /prestige-set <player> <prestige>"
+        else:
+            send "&7Usage: /prestige-set <player> <prestige>"
+
+every second:
+    loop all players:
+        if {%loop-player's uuid%::data::prestige} >= 50:
+            set {%loop-player's uuid%::data::prestige} to "&d%{%loop-player's uuid%::data::prestige}%"
+
+#      ======  PUNISHMENTS  ======
+
+command /warn [<offlineplayer>] [<text>]:
+    permission: hydra.warn, hydra.*
+    permission message: &cNo Permission!
+    trigger:
+        if arg-1 is not set:
+            send "&7Usage: /warn <player> <reason>"
+        else:
+            send "&e%player% &7warned &e%arg-1% &7for &e%arg-2%" to all players
+            add "&7[%now%] &e%player% &7warned &e%arg-1% &7- &e%arg-2%" to {%arg-1's uuid%::punishments::*}
+
+command /ban [<offlineplayer>] [<text>]:
+    trigger:
+
+command /history [<offlineplayer>]:
+    permission: hydra.history, hydra.*
+    permission message: &cNo Permission!
+    trigger:
+        if arg-1 is not set:
+            send "&e/history <player>"
+        else:
+            loop {%arg-1's uuid%::punishments::*}:
+                add "%loop-value%%nl%&7" to {_p::*}
+            set {_p2} to "%{_p::*}%"
+            replace all ", " and "and" with "" in {_p2}
+            set {_p2} to "&7No Punishments" if {_p2} is "<none>"
+            send ""
+            send "&e%arg-1%'s Punishments"
+            send "%{_p2}%"
+            send ""
+
+command /mute [<offlineplayer>] [<text>] [<text>]:
+    permission: hydra.mute, hydra.*
+    permission message: &cNo Permission
+    trigger:
+        if arg-3 is not set:
+            send "&7Usage: /mute <player> <time | forever> <reason>"
+        else:
+            if arg-2 is "forever":
+                send "%nl% &e%player% &7muted &e%arg-1% &7for &e%arg-3%&7.%nl% " to all players
+                add "&7[%now%] &e%player% &7muted &e%arg-1% &7- &e%arg-3%" to {%arg-1's uuid%::punishments::*}
+                set {mute::%arg 1's uuid%} to "%nl% &7You've been muted!%nl%%nl% &7muted by: &e%player%%nl% &7Reason: &e%arg 3%%nl% "
+            else:
+                set {_t} to toTimespan(arg 2)
+                if {_t} is not set:
+                    send "&cInvalid Time!"
+                else:
+                    send "%nl% &e%player% &7muted &e%arg-1% &7for &e%arg-3%&7. &e[%{_t}%]%nl% " to all players
+                    add "&7[%now%] &e%player% &7muted &e%arg 1% &7 - &e%arg-3% &e[%{_t}%]" to {%arg-1's uuid%::punishments::*}
+                    set {mute::%arg 1's uuid%} to "%nl% &6You've been muted!%nl%%nl% &ePunished by: &7%player%%nl% &eReason: &7%arg 3%%nl% &eLength: &7%{_t}%%nl% &eTime muted: &7%now%%nl% "
+                    set {mutet::%arg 1's uuid%} to {_t} from now
+                    set {mutet2::%arg 1's uuid%} to {_t}
+
+command /unmute [<offlineplayer>]:
+	permission: hydra.unmute, hydra.*
+	permission message: &cNo Permission
+	trigger:
+		if arg-1 is not set:
+			send "&7Usage: /unmute <player>"
+		else:
+			send "%nl% &e%player% &7unmuted &e%arg-1%&7.%nl% " to all players
+			delete {mute::%arg-1's uuid%}
+
+
+command /chat:
+    permission: hydra.chat, hydra.*
+    permission message: &cNo Permission
+    trigger:
+        open virtual chest inventory with size 1 named "&a&lChat Moderation" to player
+        create a gui slot 4 of player with white concrete named "&f&lChat Clear" to run function chat(player, "Clear")
+        create a gui slot 2 of player with yellow concrete named "&f&lChat Mute" to run function chat(player, "Mute")
+
+command /sc [<text>]:
+    permission: hydra.sc, hydra.*
+    permission message: &cNo Permission!
+    trigger:
+        if player has permission "hydra.staffchat":
+            loop all players:
+                if loop-player has permission "hydra.staffchat.see":
+                    if arg-1 is set:
+                        send "&7[&c&lAO&7] %player's display name% %colored arg-1%" to loop-player
+                    else:
+                        send "&7Usage: /sc <text>"
+
+#      ======  FUNCTIONS  ======
+
+function chat(p: player, type: String):
+    close {_p}'s inventory
+    if {_type} is "Clear":
+        loop 1000 times:
+            send " " to all players
+        send "&fChat was cleared by &e%{_p}%" to all players
+    if {_type} is "Mute":
+        if {server::chat::muted} is true:
+            send "&e%{_p}% &7has unmuted the chat" to all players
+            set {server::chat::muted} to false
+        else:
+            send "&e%{_p}% &7has muted the chat" to all players
+            set {server::chat::muted} to true
+
+function toTimespan(t: text) :: timespan:
+	set {_conversion::s} to "seconds"
+	set {_conversion::m} to "minutes"
+	set {_conversion::h} to "hours"
+	set {_conversion::d} to "days"
+	set {_l} to length of {_t}
+	set {_a} to 1 if {_l} is 2
+	set {_a} to 2 if {_l} is 3
+	set {_l::1} to first {_a} characters of {_t}
+	set {_l::2} to last character of {_t}
+	set {_t} to "%{_l::1}% %{_conversion::%{_l::2}%}%"
+	return ({_t} parsed as timespan)
+
+
+on chat:
+    cancel event
+    replace every ":heart:" with "❤" in the message
+    replace every ":shrug:" with "¯\_(ツ)_/¯" in the message
+    if {server::chat::muted} is true:
+        if player has permission "hydra.chat.bypass":
+            send "&7[%{%player's uuid%::data::prestige}%✯&7] %player's display name% &a%message%" to all players
+        else:
+            send "&7Chat is currently muted"
+    else:
+        if {%player's uuid%::data::chatcolor} is set:
+            send "&7[%{%player's uuid%::data::prestige}%✯&7] %player's display name% %{%player's uuid%::data::chatcolor}%%message%" to all players
+        else:
+            send "&7[%{%player's uuid%::data::prestige}%✯&7] %player's display name% &7%message%" to all players
