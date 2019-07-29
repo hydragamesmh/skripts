@@ -180,7 +180,7 @@ every second:
 		{mute::%loop-player's uuid%} is set
 		{mutet::%loop-player's uuid%} is set
 		if difference between {mutet::%loop-player's uuid%} and now is less than 1 second:
-			send "&6[Beans] &eYou have been unmuted!" to loop-player
+			send "&7You have been unmuted!" to loop-player
 			delete {mute::%loop-player's uuid%}
 			delete {mutet::%loop-player's uuid%}
 			delete {mutet2::%loop-player's uuid%}
